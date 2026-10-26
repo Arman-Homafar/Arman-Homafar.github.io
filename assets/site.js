@@ -65,6 +65,37 @@ if ('IntersectionObserver' in window) {
 
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+const progressBar = document.querySelector('.scroll-progress span');
+const updateScrollProgress = () => {
+  if (!progressBar) return;
+  const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+  const progress = scrollable > 0 ? window.scrollY / scrollable : 0;
+  progressBar.style.transform = `scaleX(${Math.min(Math.max(progress, 0), 1)})`;
+};
+updateScrollProgress();
+window.addEventListener('scroll', updateScrollProgress, { passive: true });
+window.addEventListener('resize', updateScrollProgress, { passive: true });
+
+if (!reduceMotion) {
+  document.querySelectorAll('.hero-metrics strong[data-count]').forEach((metric, index) => {
+    const target = Number(metric.dataset.count);
+    if (!Number.isFinite(target)) return;
+    const duration = 760;
+    const delay = 520 + (index * 110);
+    metric.textContent = '0';
+    setTimeout(() => {
+      const started = performance.now();
+      const tick = (now) => {
+        const elapsed = Math.min((now - started) / duration, 1);
+        const eased = 1 - ((1 - elapsed) ** 3);
+        metric.textContent = String(Math.round(target * eased));
+        if (elapsed < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    }, delay);
+  });
+}
+
 if (!reduceMotion && 'IntersectionObserver' in window) {
   document.documentElement.classList.add('motion-ready');
   const revealGroups = [
@@ -102,6 +133,25 @@ if (!reduceMotion && 'IntersectionObserver' in window) {
 }
 
 if (!reduceMotion && window.matchMedia('(pointer: fine)').matches) {
+  const hero = document.querySelector('.hero');
+  hero?.addEventListener('pointermove', (event) => {
+    const bounds = hero.getBoundingClientRect();
+    hero.style.setProperty('--glow-x', `${((event.clientX - bounds.left) / bounds.width) * 100}%`);
+    hero.style.setProperty('--glow-y', `${((event.clientY - bounds.top) / bounds.height) * 100}%`);
+  });
+
+  document.querySelectorAll('.magnetic').forEach((element) => {
+    element.addEventListener('pointermove', (event) => {
+      const bounds = element.getBoundingClientRect();
+      const x = (event.clientX - bounds.left - (bounds.width / 2)) * 0.1;
+      const y = (event.clientY - bounds.top - (bounds.height / 2)) * 0.13;
+      element.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0)`;
+    });
+    element.addEventListener('pointerleave', () => {
+      element.style.transform = '';
+    });
+  });
+
   document.querySelectorAll('.project').forEach((card) => {
     card.addEventListener('pointermove', (event) => {
       if (!card.classList.contains('is-visible')) return;
