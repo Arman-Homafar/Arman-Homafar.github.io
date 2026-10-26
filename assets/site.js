@@ -76,26 +76,6 @@ updateScrollProgress();
 window.addEventListener('scroll', updateScrollProgress, { passive: true });
 window.addEventListener('resize', updateScrollProgress, { passive: true });
 
-if (!reduceMotion) {
-  document.querySelectorAll('.hero-metrics strong[data-count]').forEach((metric, index) => {
-    const target = Number(metric.dataset.count);
-    if (!Number.isFinite(target)) return;
-    const duration = 760;
-    const delay = 520 + (index * 110);
-    metric.textContent = '0';
-    setTimeout(() => {
-      const started = performance.now();
-      const tick = (now) => {
-        const elapsed = Math.min((now - started) / duration, 1);
-        const eased = 1 - ((1 - elapsed) ** 3);
-        metric.textContent = String(Math.round(target * eased));
-        if (elapsed < 1) requestAnimationFrame(tick);
-      };
-      requestAnimationFrame(tick);
-    }, delay);
-  });
-}
-
 if (!reduceMotion && 'IntersectionObserver' in window) {
   document.documentElement.classList.add('motion-ready');
   const revealGroups = [
